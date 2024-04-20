@@ -128,65 +128,6 @@ def display_data():
         print(f"Weight: {info['weight']} kg")
         print("-" * 20)
 
-# Prepare the features and target for the model
-# Convert data into a format suitable for model training/testing
-def prepare_data(user_data):
-    data = np.array([[d['activity_level'], d['calories'], d['protein'], d['carbs'], d['fat'], d['weight']] for d in user_data])
-    X = data[:, :-1]  # all columns except the last one
-    y = data[:, -1]   # the last column is the weight
-    return X, y
-
-X, y = prepare_data(user_data)
-
-# Define the models for stacking
-estimators = [
-    ('rf', RandomForestRegressor(n_estimators=10, random_state=42)),
-    ('svr', SVR(gamma='scale')),
-    ('knn', KNeighborsRegressor(n_neighbors=5))
-]
-final_estimator = LinearRegression()
-
-# Create the stacking regressor
-stacked_model = StackingRegressor(estimators=estimators, final_estimator=final_estimator)
-
-# Setup cross-validation
-kf = KFold(n_splits=5, shuffle=True, random_state=42)
-mse_scorer = make_scorer(mean_squared_error)
-
-# Perform cross-validation
-cv_scores = cross_val_score(stacked_model, X, y, cv=kf, scoring=mse_scorer)
-
-# Calculate RMSE for each fold
-rmse_scores = np.sqrt(cv_scores)
-rmse_scores.mean(), rmse_scores.std()
-
-
-# Train ensemble model
-def train_ensemble_model(X_train, y_train):
-    # Standardize features
-    scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train)
-
-    # Initialize individual models
-    rf = RandomForestRegressor(n_estimators=100, random_state=42)
-    svr = SVR(gamma='scale', C=1.0, epsilon=0.2)
-    knn = KNeighborsRegressor(n_neighbors=5)
-
-    # Define the stacking ensemble
-    estimator_list = [
-        ('rf', rf),
-        ('svr', svr),
-        ('knn', knn)
-    ]
-
-    # Build stack model
-    stack_model = StackingRegressor(estimators=estimator_list, final_estimator=LinearRegression())
-
-    # Train stacked model
-    stack_model.fit(X_train, y_train)
-
-    return stack_model, scaler
-
 def get_feedback():
     # Load the user data
     user_data = load_data()
@@ -265,8 +206,6 @@ def predict_weight():
     plt.show()
 
     return prediction
-
-
 
 def recommend_diet_plan():
     user_data = load_data()
