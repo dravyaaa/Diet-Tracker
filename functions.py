@@ -192,7 +192,6 @@ def get_feedback():
         print("\nConsider adjusting your fat intake to meet the recommended range.")
 
 # Predict weight using the trained model
-# Predict weight using the trained model
 def predict_weight():
     user_data = load_data()
 
@@ -204,8 +203,12 @@ def predict_weight():
     # Prepare the dataset for the model
     X, y = prepare_data(user_data)
 
-    # Train the ensemble model
-    model, scaler = train_ensemble_model(X, y)
+    # Train the linear regression model
+    model = LinearRegression()
+    model.fit(X, y)
+
+    # Create a scaler object
+    scaler = StandardScaler()
 
     # Prompt user for new dietary data to predict their weight
     print("\nEnter your today's diet information to predict future weight:")
@@ -216,26 +219,29 @@ def predict_weight():
     activity_level = float(input("Activity level (1-5): "))
 
     # Scale the input data
-    X_new = scaler.transform(np.array([[calories, protein, carbs, fat, activity_level]]))
+    X_new = scaler.fit_transform(np.array([[calories, protein, carbs, fat, activity_level]]))
 
-    # Predict and display the future weight
+    # Predict the future weight
     prediction = model.predict(X_new)
     print(f"\nPredicted weight: {prediction[0]:.2f} kg")
 
-    # Visualize the ensemble model and user's progress
+    # Visualize the regression line and user's progress
     plt.figure(figsize=(10, 6))
-
-    # Plot the training data
-    plt.plot(X[:, 0], y, 'b.', label='Training data')
 
     # Plot the actual weight measurements over time
     sorted_data = sorted(user_data, key=lambda x: datetime.datetime.strptime(x['date'], "%m/%d/%Y"))
     dates = [datetime.datetime.strptime(info['date'], "%m/%d/%Y") for info in sorted_data]
     weights = [info['weight'] for info in sorted_data]
-    plt.plot(dates, weights, 'g--', label='Actual weight')
+    plt.plot(dates, weights, 'bo-', label='Actual weight')
+
+    # Plot the regression line
+    X_dates = np.array([(date - dates[0]).days for date in dates]).reshape(-1, 1)  # This line needs correction
+    X_regression = np.array([[calories, protein, carbs, fat, activity_level] for _ in range(len(dates))])
+    regression_line = model.predict(X_regression)
+    plt.plot(dates, regression_line, 'r--', label='Regression line')
 
     # Plot the predicted weight
-    plt.plot(dates[-1], prediction, 'ro', label='Predicted weight')
+    plt.plot(dates[-1] + datetime.timedelta(days=1), prediction, 'ro', label='Predicted weight')
 
     plt.xlabel('Date')
     plt.ylabel('Weight (kg)')
@@ -243,6 +249,7 @@ def predict_weight():
     plt.legend()
     plt.grid(True)
     plt.show()
+
 
 def recommend_diet_plan():
     user_data = load_data()
