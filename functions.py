@@ -1,9 +1,11 @@
-import datetime
+from sklearn.model_selection import cross_val_score, KFold
+from sklearn.metrics import mean_squared_error, make_scorer
 import numpy as np
-import os
 import json
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+import os
+import datetime
+import joblib
+from joblib import dump
 from sklearn.ensemble import RandomForestRegressor, StackingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
@@ -11,13 +13,13 @@ from sklearn.neighbors import KNeighborsRegressor
 import matplotlib.pyplot as plt
 
 
+# Load the updated data
 def load_data(file_path='user_data.json'):
     if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
         with open(file_path, 'r') as file:
             return json.load(file)
     else:
         return []
-
 
 def save_data(data, file_path='user_data.json'):
     with open(file_path, 'w') as file:
@@ -29,6 +31,10 @@ def validate_date(date_str):
         return True
     except ValueError:
         return False
+
+
+# Load user data from JSON file
+user_data = load_data('/mnt/data/user_data.json')
 
 
 def enter_diet_info():
@@ -123,10 +129,36 @@ def display_data():
         print("-" * 20)
 
 # Prepare the features and target for the model
+# Convert data into a format suitable for model training/testing
 def prepare_data(user_data):
-    X = np.array([[info['calories'], info['protein'], info['carbs'], info['fat'], info['activity_level']] for info in user_data])
-    y = np.array([info['weight'] for info in user_data])
+    data = np.array([[d['activity_level'], d['calories'], d['protein'], d['carbs'], d['fat'], d['weight']] for d in user_data])
+    X = data[:, :-1]  # all columns except the last one
+    y = data[:, -1]   # the last column is the weight
     return X, y
+
+X, y = prepare_data(user_data)
+
+# Define the models for stacking
+estimators = [
+    ('rf', RandomForestRegressor(n_estimators=10, random_state=42)),
+    ('svr', SVR(gamma='scale')),
+    ('knn', KNeighborsRegressor(n_neighbors=5))
+]
+final_estimator = LinearRegression()
+
+# Create the stacking regressor
+stacked_model = StackingRegressor(estimators=estimators, final_estimator=final_estimator)
+
+# Setup cross-validation
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+mse_scorer = make_scorer(mean_squared_error)
+
+# Perform cross-validation
+cv_scores = cross_val_score(stacked_model, X, y, cv=kf, scoring=mse_scorer)
+
+# Calculate RMSE for each fold
+rmse_scores = np.sqrt(cv_scores)
+rmse_scores.mean(), rmse_scores.std()
 
 
 # Train ensemble model
@@ -191,64 +223,49 @@ def get_feedback():
     if fat_percent < 20 or fat_percent > 35:
         print("\nConsider adjusting your fat intake to meet the recommended range.")
 
+def save_model(model, filename='model.pkl'):
+    joblib.dump(model, filename)
+
+def load_model(filename='model.pkl'):
+    return joblib.load(filename)
+
+def log_prediction(date, actual, predicted):
+    with open('predictions_log.txt', 'a') as file:
+        file.write(f"{date}: Actual Weight - {actual}, Predicted Weight - {predicted}\n")
+
+
 # Predict weight using the trained model
 def predict_weight():
+
+    # Load and prepare data
     user_data = load_data()
+    data = np.array(
+        [[d['activity_level'], d['calories'], d['protein'], d['carbs'], d['fat'], d['weight']] for d in user_data])
+    X, y = data[:, :-1], data[:, -1]
 
-    # Check if there are enough data points to create a model
-    if len(user_data) < 2:
-        print("\nNot enough data to make predictions.")
-        return
-
-    # Prepare the dataset for the model
-    X, y = prepare_data(user_data)
-
-    # Train the linear regression model
-    model = LinearRegression()
+    # Train model
+    model = RandomForestRegressor(max_depth=3, n_estimators=50, random_state=42)
     model.fit(X, y)
+    dump(model, 'rf_model.pkl')  # Save the model
 
-    # Create a scaler object
-    scaler = StandardScaler()
+    # Predict the next day's weight
+    next_day_data = X[-1] * np.random.uniform(0.95, 1.05, size=X.shape[1])
+    prediction = model.predict([next_day_data])[0]
 
-    # Prompt user for new dietary data to predict their weight
-    print("\nEnter your today's diet information to predict future weight:")
-    calories = float(input("Calories consumed: "))
-    protein = float(input("Protein (g): "))
-    carbs = float(input("Carbohydrates (g): "))
-    fat = float(input("Fat (g): "))
-    activity_level = float(input("Activity level (1-5): "))
-
-    # Scale the input data
-    X_new = scaler.fit_transform(np.array([[calories, protein, carbs, fat, activity_level]]))
-
-    # Predict the future weight
-    prediction = model.predict(X_new)
-    print(f"\nPredicted weight: {prediction[0]:.2f} kg")
-
-    # Visualize the regression line and user's progress
-    plt.figure(figsize=(10, 6))
-
-    # Plot the actual weight measurements over time
-    sorted_data = sorted(user_data, key=lambda x: datetime.datetime.strptime(x['date'], "%m/%d/%Y"))
-    dates = [datetime.datetime.strptime(info['date'], "%m/%d/%Y") for info in sorted_data]
-    weights = [info['weight'] for info in sorted_data]
-    plt.plot(dates, weights, 'bo-', label='Actual weight')
-
-    # Plot the regression line
-    X_dates = np.array([(date - dates[0]).days for date in dates]).reshape(-1, 1)  # This line needs correction
-    X_regression = np.array([[calories, protein, carbs, fat, activity_level] for _ in range(len(dates))])
-    regression_line = model.predict(X_regression)
-    plt.plot(dates, regression_line, 'r--', label='Regression line')
-
-    # Plot the predicted weight
-    plt.plot(dates[-1] + datetime.timedelta(days=1), prediction, 'ro', label='Predicted weight')
-
+    # Plot results
+    dates = [datetime.datetime.strptime(d['date'], "%m/%d/%Y") for d in user_data]
+    plt.figure(figsize=(10, 5))
+    plt.plot(dates, y, 'bo-', label='Historical Weights')
+    plt.plot(dates[-1] + datetime.timedelta(days=1), prediction, 'ro', label='Predicted Weight')
     plt.xlabel('Date')
-    plt.ylabel('Weight (kg)')
+    plt.ylabel('Weight')
     plt.title('Weight Prediction and Progress')
     plt.legend()
     plt.grid(True)
     plt.show()
+
+    return prediction
+
 
 
 def recommend_diet_plan():
