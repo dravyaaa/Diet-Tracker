@@ -6,7 +6,7 @@ import os
 import datetime
 import joblib
 from joblib import dump
-from sklearn.ensemble import RandomForestRegressor, StackingRegressor, RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, VotingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
@@ -208,39 +208,53 @@ def predict_weight():
     return prediction
 
 
-def recommend_diet_plan():
-    user_data = load_data()  # Load data inside the function
+def create_weight_loss_plan(current_weight, target_weight, activity_level, preferred_diet, timeframe):
+    # Simulate loading or creation of training data
+    # Example feature set: [current weight, target weight, activity level, diet type encoded, timeframe]
+    # Example target: daily calorie intake (just a placeholder)
+    np.random.seed(42)
+    X_train = np.random.rand(100, 5) * 100  # 100 samples, 5 features
+    y_train = np.random.rand(100) * 2000 + 1200  # 100 samples, target between 1200 and 3200 calories
 
-    # Prepare the data for training
-    features = []
-    targets = []
-    for entry in user_data:
-        date = datetime.datetime.strptime(entry['date'], "%m/%d/%Y")
-        day_of_year = date.timetuple().tm_yday
-        feature_vector = [
-            day_of_year,
-            entry['activity_level'],
-            entry['calories'],
-            entry['protein'],
-            entry['carbs'],
-            entry['fat']
-        ]
-        cal_level = 'low' if entry['calories'] < 1500 else 'medium' if entry['calories'] < 1800 else 'high'
-        features.append(feature_vector)
-        targets.append(cal_level)
+    # Encode preferred diet from text to a numeric value
+    diet_types = {'vegan': 1, 'low-carb': 2, 'high-protein': 3, 'balanced': 4}
+    diet_code = diet_types.get(preferred_diet.lower(), 0)  # default to 0 if not found
 
-    features = np.array(features)
-    targets = np.array(targets)
+    # Define models
+    rf = RandomForestRegressor(n_estimators=100, random_state=42)
+    gb = GradientBoostingRegressor(n_estimators=100, random_state=42)
+    svr = SVR(kernel='linear')
 
-    # Train a RandomForestClassifier
-    classifier = RandomForestClassifier(n_estimators=100, random_state=42)
-    classifier.fit(features, targets)
+    # Create ensemble
+    ensemble = VotingRegressor(estimators=[('rf', rf), ('gb', gb), ('svr', svr)])
 
-    # Predict the diet plan for the next day
-    next_day_features = [features[-1][0] + 1] + list(features[-1][1:])
-    recommended_plan = classifier.predict([next_day_features])
+    # Fit ensemble model
+    ensemble.fit(X_train, y_train)
 
-    return recommended_plan[0]
+    # Generate feature vector for prediction
+    feature_vector = [current_weight, target_weight, activity_level, diet_code, timeframe]
 
-    return recommended_plan[0]
+    # Predict daily calorie intake and macronutrient distribution (placeholder values)
+    daily_calories = ensemble.predict([feature_vector])[0]
 
+    # Create plan (placeholder details for macronutrients)
+    weight_loss_plan = {
+        'Daily Calories': daily_calories,
+        'Protein (g)': daily_calories * 0.15 / 4,  # Example calculation
+        'Carbs (g)': daily_calories * 0.55 / 4,
+        'Fat (g)': daily_calories * 0.30 / 9,
+        'Duration (weeks)': timeframe
+    }
+
+    return weight_loss_plan
+
+
+def recommend_weight_loss_plan():
+    current_weight = float(input("Enter your current weight (kg): "))
+    target_weight = float(input("Enter your target weight (kg): "))
+    activity_level = int(input("Enter your daily activity level (1-5): "))
+    preferred_diet = input("Enter your preferred diet (Balanced, low-carb, high-protein, vegan): ")
+    timeframe = int(input("Enter the timeframe to achieve the target weight (in weeks): "))
+
+    plan = create_weight_loss_plan(current_weight, target_weight, activity_level, preferred_diet, timeframe)
+    return plan

@@ -9,7 +9,7 @@ def print_menu():
     print("2. Display all data")
     print("3. Get feedback for staying on track")
     print("4. Predict future weight")
-    print("5. Recommend a diet plan")
+    print("5. Get a personalized weight loss plan")
     print("6. Exit")
 
 
@@ -32,9 +32,11 @@ def main():
             print("\nPredicting weight using enhanced model...")
             print("Predicted weight:", functions.predict_weight())
         elif choice == 5:
-            print(
-                "\nThis option uses a RandomForest classifier to recommend a diet plan based on your personal information.")
-            print("Recommended diet plan:", functions.recommend_diet_plan())
+            print("\nGenerating personalized weight loss plan...")
+            plan = functions.recommend_weight_loss_plan()
+            print("\nRecommended Weight Loss Plan:")
+            for key, value in plan.items():
+                print(f"{key}: {value}")
         elif choice == 6:
             print("\nExiting...")
             break
