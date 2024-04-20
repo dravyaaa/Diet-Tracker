@@ -1,20 +1,22 @@
 import datetime
 import numpy as np
-import json
-from sklearn.linear_model import LinearRegression
-from sklearn.tree import DecisionTreeClassifier
-
-# Helper functions for JSON data handling
-import json
 import os
+import json
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestRegressor, StackingRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.svm import SVR
+from sklearn.neighbors import KNeighborsRegressor
+import matplotlib.pyplot as plt
+
 
 def load_data(file_path='user_data.json'):
-    # Check if the file exists and is not empty
-    if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
-        return []  # Return an empty list if file doesn't exist or is empty
-    else:
+    if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
         with open(file_path, 'r') as file:
             return json.load(file)
+    else:
+        return []
 
 
 def save_data(data, file_path='user_data.json'):
@@ -120,45 +122,127 @@ def display_data():
         print(f"Weight: {info['weight']} kg")
         print("-" * 20)
 
+# Prepare the features and target for the model
+def prepare_data(user_data):
+    X = np.array([[info['calories'], info['protein'], info['carbs'], info['fat'], info['activity_level']] for info in user_data])
+    y = np.array([info['weight'] for info in user_data])
+    return X, y
+
+
+# Train ensemble model
+def train_ensemble_model(X_train, y_train):
+    # Standardize features
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+
+    # Initialize individual models
+    rf = RandomForestRegressor(n_estimators=100, random_state=42)
+    svr = SVR(gamma='scale', C=1.0, epsilon=0.2)
+    knn = KNeighborsRegressor(n_neighbors=5)
+
+    # Define the stacking ensemble
+    estimator_list = [
+        ('rf', rf),
+        ('svr', svr),
+        ('knn', knn)
+    ]
+
+    # Build stack model
+    stack_model = StackingRegressor(estimators=estimator_list, final_estimator=LinearRegression())
+
+    # Train stacked model
+    stack_model.fit(X_train, y_train)
+
+    return stack_model, scaler
+
 def get_feedback():
+    # Load the user data
     user_data = load_data()
+
+    # Check if there is any data to provide feedback
     if not user_data:
         print("\nNo data to provide feedback.")
         return
 
+    # Calculate macronutrient percentages
     total_calories = sum(info['calories'] for info in user_data)
     total_protein = sum(info['protein'] for info in user_data)
     total_carbs = sum(info['carbs'] for info in user_data)
     total_fat = sum(info['fat'] for info in user_data)
+
+    if total_calories == 0:  # Prevent division by zero if total_calories is zero
+        print("Insufficient data to calculate macronutrient percentages.")
+        return
 
     protein_percent = (total_protein * 4 * 100) / total_calories
     carbs_percent = (total_carbs * 4 * 100) / total_calories
     fat_percent = (total_fat * 9 * 100) / total_calories
 
     print("\nDiet Feedback:")
-    print(f"Average calories per day: {total_calories / len(user_data):.2f}")
-    print(f"Protein intake: {protein_percent:.2f}%")
-    print(f"Carbohydrate intake: {carbs_percent:.2f}%")
-    print(f"Fat intake: {fat_percent:.2f}%")
+    print(f"\nAverage calories per day: {total_calories / len(user_data):.2f}")
+    print(f"Protein intake: {protein_percent:.2f}% (Recommended: 10-35%)")
+    print(f"Carbohydrate intake: {carbs_percent:.2f}% (Recommended: 45-65%)")
+    print(f"Fat intake: {fat_percent:.2f}% (Recommended: 20-35%)")
 
+    if protein_percent < 10 or protein_percent > 35:
+        print("\nConsider adjusting your protein intake to meet the recommended range.")
+    if carbs_percent < 45 or carbs_percent > 65:
+        print("\nConsider adjusting your carbohydrate intake to meet the recommended range.")
+    if fat_percent < 20 or fat_percent > 35:
+        print("\nConsider adjusting your fat intake to meet the recommended range.")
+
+# Predict weight using the trained model
+# Predict weight using the trained model
 def predict_weight():
     user_data = load_data()
+
+    # Check if there are enough data points to create a model
     if len(user_data) < 2:
         print("\nNot enough data to make predictions.")
         return
 
-    X = np.array([[info['calories'], info['protein'], info['carbs'], info['fat']] for info in user_data])
-    y = np.array([info['weight'] for info in user_data])
-    model = LinearRegression()
-    model.fit(X, y)
+    # Prepare the dataset for the model
+    X, y = prepare_data(user_data)
 
-    calories = float(input("\nEnter calories: "))
-    protein = float(input("Enter protein (g): "))
-    carbs = float(input("Enter carbohydrates (g): "))
-    fat = float(input("Enter fat (g): "))
+    # Train the ensemble model
+    model, scaler = train_ensemble_model(X, y)
 
-    prediction = model.predict(np.array([[calories, protein, carbs, fat]]))
+    # Prompt user for new dietary data to predict their weight
+    print("\nEnter your today's diet information to predict future weight:")
+    calories = float(input("Calories consumed: "))
+    protein = float(input("Protein (g): "))
+    carbs = float(input("Carbohydrates (g): "))
+    fat = float(input("Fat (g): "))
+    activity_level = float(input("Activity level (1-5): "))
+
+    # Scale the input data
+    X_new = scaler.transform(np.array([[calories, protein, carbs, fat, activity_level]]))
+
+    # Predict and display the future weight
+    prediction = model.predict(X_new)
     print(f"\nPredicted weight: {prediction[0]:.2f} kg")
+
+    # Visualize the ensemble model and user's progress
+    plt.figure(figsize=(10, 6))
+
+    # Plot the training data
+    plt.plot(X[:, 0], y, 'b.', label='Training data')
+
+    # Plot the actual weight measurements over time
+    sorted_data = sorted(user_data, key=lambda x: datetime.datetime.strptime(x['date'], "%m/%d/%Y"))
+    dates = [datetime.datetime.strptime(info['date'], "%m/%d/%Y") for info in sorted_data]
+    weights = [info['weight'] for info in sorted_data]
+    plt.plot(dates, weights, 'g--', label='Actual weight')
+
+    # Plot the predicted weight
+    plt.plot(dates[-1], prediction, 'ro', label='Predicted weight')
+
+    plt.xlabel('Date')
+    plt.ylabel('Weight (kg)')
+    plt.title('Weight Prediction and Progress')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 def recommend_diet_plan():
     user_data = load_data()
