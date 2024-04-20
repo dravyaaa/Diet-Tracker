@@ -6,7 +6,7 @@ import os
 import datetime
 import joblib
 from joblib import dump
-from sklearn.ensemble import RandomForestRegressor, StackingRegressor
+from sklearn.ensemble import RandomForestRegressor, StackingRegressor, RandomForestClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
@@ -207,5 +207,40 @@ def predict_weight():
 
     return prediction
 
+
 def recommend_diet_plan():
-    user_data = load_data()
+    user_data = load_data()  # Load data inside the function
+
+    # Prepare the data for training
+    features = []
+    targets = []
+    for entry in user_data:
+        date = datetime.datetime.strptime(entry['date'], "%m/%d/%Y")
+        day_of_year = date.timetuple().tm_yday
+        feature_vector = [
+            day_of_year,
+            entry['activity_level'],
+            entry['calories'],
+            entry['protein'],
+            entry['carbs'],
+            entry['fat']
+        ]
+        cal_level = 'low' if entry['calories'] < 1500 else 'medium' if entry['calories'] < 1800 else 'high'
+        features.append(feature_vector)
+        targets.append(cal_level)
+
+    features = np.array(features)
+    targets = np.array(targets)
+
+    # Train a RandomForestClassifier
+    classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+    classifier.fit(features, targets)
+
+    # Predict the diet plan for the next day
+    next_day_features = [features[-1][0] + 1] + list(features[-1][1:])
+    recommended_plan = classifier.predict([next_day_features])
+
+    return recommended_plan[0]
+
+    return recommended_plan[0]
+
