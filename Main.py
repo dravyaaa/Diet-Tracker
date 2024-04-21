@@ -1,6 +1,5 @@
 # main.py
 import functions
-import re
 
 def print_menu():
     print("Diet Tracking Menu")
@@ -11,15 +10,16 @@ def print_menu():
     print("4. Get feedback for staying on track")
     print("5. Predict future weight")
     print("6. Get a personalized weight loss plan")
-    print("7. Exit")
+    print("7. Generate meal plan")
+    print("8. Exit")
 
 
 def main():
     while True:
         print_menu()
         choice = input("Enter your choice (1-8): ")
-        if not choice.isdigit() or int(choice) < 1 or int(choice) > 7:
-            print("\nInvalid choice. Please enter a number from 1 to 7.")
+        if not choice.isdigit() or int(choice) < 1 or int(choice) > 8:
+            print("\nInvalid choice. Please enter a number from 1 to 8.")
             continue
 
         choice = int(choice)
@@ -41,6 +41,18 @@ def main():
             for key, value in plan.items():
                 print(f"{key}: {value}")
         elif choice == 7:
+            print("\nGenerating meal plan...")
+            target_calories = float(input("Enter target calories: "))
+            target_protein = float(input("Enter target protein (g): "))
+            target_carbs = float(input("Enter target carbohydrates (g): "))
+            target_fat = float(input("Enter target fat (g): "))
+            meal_plan = functions.generate_meal_plan(target_calories, target_protein, target_carbs, target_fat)
+            print("\nMeal Plan:")
+            for meal, details in meal_plan.items():
+                print(f"\n{meal}:")
+                for macronutrient, value in details.items():
+                    print(f"{macronutrient}: {value:.2f}")
+        elif choice == 8:
             print("\nExiting...")
             break
         input("\nPress Enter to continue...")

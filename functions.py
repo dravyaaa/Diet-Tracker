@@ -282,3 +282,46 @@ def recommend_weight_loss_plan():
     plan = create_weight_loss_plan(current_weight, target_weight, activity_level, preferred_diet, timeframe)
     return plan
 
+def generate_meal_plan(target_calories, target_protein, target_carbs, target_fat):
+    # Load user data
+    user_data = load_data()
+
+    # Prepare data
+    data = np.array(
+        [[d['calories'], d['protein'], d['carbs'], d['fat']] for d in user_data])
+    X, y = data[:, :-1], data[:, -1]
+
+    # Define models
+    lr = LinearRegression()
+    rf = RandomForestRegressor(n_estimators=100, random_state=42)
+    gb = GradientBoostingRegressor(n_estimators=100, random_state=42)
+
+    # Create ensemble
+    ensemble = VotingRegressor(estimators=[('lr', lr), ('rf', rf), ('gb', gb)])
+
+    # Fit ensemble model
+    ensemble.fit(X, y)
+
+    # Generate meal plan (placeholder logic)
+    meal_plan = {
+        'Breakfast': {
+            'Calories': target_calories * 0.25,
+            'Protein': target_protein * 0.25,
+            'Carbs': target_carbs * 0.25,
+            'Fat': target_fat * 0.25
+        },
+        'Lunch': {
+            'Calories': target_calories * 0.35,
+            'Protein': target_protein * 0.35,
+            'Carbs': target_carbs * 0.35,
+            'Fat': target_fat * 0.35
+        },
+        'Dinner': {
+            'Calories': target_calories * 0.40,
+            'Protein': target_protein * 0.40,
+            'Carbs': target_carbs * 0.40,
+            'Fat': target_fat * 0.40
+        }
+    }
+
+    return meal_plan
