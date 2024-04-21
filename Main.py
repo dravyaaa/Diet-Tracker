@@ -7,10 +7,10 @@ def print_menu():
     print("1. Enter diet information for the day")
     print("2. Delete a diet entry")
     print("3. Display all data")
-    print("4. Get feedback for staying on track")
+    print("4. Get feedback")
     print("5. Predict future weight")
-    print("6. Get a personalized weight loss plan")
-    print("7. Generate meal plan")
+    print("6. Get a weight loss plan")
+    print("7. Get a meal plan")
     print("8. Exit")
 
 
@@ -35,7 +35,7 @@ def main():
             print("\nPredicting weight using enhanced model...")
             print("Predicted weight:", functions.predict_weight())
         elif choice == 6:
-            print("\nGenerating personalized weight loss plan...")
+            print("\nGenerating weight loss plan...")
             plan = functions.recommend_weight_loss_plan()
             print("\nRecommended Weight Loss Plan:")
             for key, value in plan.items():

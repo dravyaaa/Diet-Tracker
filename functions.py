@@ -197,11 +197,9 @@ def log_prediction(date, actual, predicted):
 
 # Predict weight using the trained model
 def predict_weight():
-
     # Load and prepare data
     user_data = load_data()
-    data = np.array(
-        [[d['activity_level'], d['calories'], d['protein'], d['carbs'], d['fat'], d['weight']] for d in user_data])
+    data = np.array([[d['age'], d['activity_level'], d['calories'], d['protein'], d['carbs'], d['fat'], d['weight']] for d in user_data])
     X, y = data[:, :-1], data[:, -1]
 
     # Train model
@@ -209,8 +207,9 @@ def predict_weight():
     model.fit(X, y)
     dump(model, 'rf_model.pkl')  # Save the model
 
-    # Predict the next day's weight
-    next_day_data = X[-1] * np.random.uniform(0.95, 1.05, size=X.shape[1])
+    # Get the last entry's data
+    last_entry = user_data[-1]
+    next_day_data = [last_entry['age'] + 1] + [last_entry[feature] for feature in ['activity_level', 'calories', 'protein', 'carbs', 'fat']]
     prediction = model.predict([next_day_data])[0]
 
     # Plot results
@@ -224,6 +223,8 @@ def predict_weight():
     plt.legend()
     plt.grid(True)
     plt.show()
+
+    log_prediction(user_data[-1]['date'], last_entry['weight'], prediction)
 
     return prediction
 
