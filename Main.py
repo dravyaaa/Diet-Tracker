@@ -42,11 +42,10 @@ def main():
                 print(f"{key}: {value}")
         elif choice == 7:
             print("\nGenerating meal plan...")
-            target_calories = float(input("Enter target calories: "))
             target_protein = float(input("Enter target protein (g): "))
             target_carbs = float(input("Enter target carbohydrates (g): "))
             target_fat = float(input("Enter target fat (g): "))
-            meal_plan = functions.generate_meal_plan(target_calories, target_protein, target_carbs, target_fat)
+            meal_plan = functions.generate_meal_plan(target_protein, target_carbs, target_fat)
             print("\nMeal Plan:")
             for meal, details in meal_plan.items():
                 print(f"\n{meal}:")

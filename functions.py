@@ -5,10 +5,12 @@ import datetime
 import joblib
 from joblib import dump
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, VotingRegressor
+from sklearn.ensemble import VotingRegressor
 from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.neural_network import MLPRegressor
 from sklearn.svm import SVR
 import matplotlib.pyplot as plt
-
 
 # Load the updated data
 def load_data(file_path='user_data.json'):
@@ -22,7 +24,7 @@ def save_data(data, file_path='user_data.json'):
     with open(file_path, 'w') as file:
         json.dump(data, file, indent=4)
 
-
+# Function to validate date input
 def validate_date(date_str):
     try:
         datetime.datetime.strptime(date_str, "%m/%d/%Y")
@@ -41,7 +43,7 @@ def enter_diet_info():
 
     # Age input with validation
     age = input("Enter your age: ")
-    while not age.isdigit() or int(age) <= 0 or int(age) > 120:  # Ensuring age is reasonable
+    while not age.isdigit() or int(age) <= 0 or int(age) > 120:
         print("Invalid input. Age must be a positive number less than 120.")
         age = input("Enter your age: ")
 
@@ -96,8 +98,6 @@ def enter_diet_info():
     save_data(user_data)
     print("\nDiet information recorded successfully.")
 
-
-
 def delete_diet_info():
     user_data = load_data()  # Load the existing data
 
@@ -128,7 +128,6 @@ def delete_diet_info():
     else:
         print("No entry found for the specified date.")
 
-
 def display_data():
     user_data = load_data()
     if not user_data:
@@ -146,7 +145,6 @@ def display_data():
         print(f"Fat: {info['fat']} g")
         print(f"Weight: {info['weight']} kg")
         print("-" * 20)
-
 
 def get_feedback():
     # Load the user data
@@ -278,42 +276,44 @@ def recommend_weight_loss_plan():
     plan = create_weight_loss_plan(current_weight, target_weight, activity_level, preferred_diet, timeframe)
     return plan
 
-def generate_meal_plan(target_calories, target_protein, target_carbs, target_fat):
+def generate_meal_plan(target_protein, target_carbs, target_fat):
     # Load user data
     user_data = load_data()
 
     # Prepare data
-    data = np.array(
-        [[d['calories'], d['protein'], d['carbs'], d['fat']] for d in user_data])
+    data = np.array([[d['protein'], d['carbs'], d['fat'], d['calories']] for d in user_data])
     X, y = data[:, :-1], data[:, -1]
 
     # Define models
-    lr = LinearRegression()
-    rf = RandomForestRegressor(n_estimators=100, random_state=42)
-    gb = GradientBoostingRegressor(n_estimators=100, random_state=42)
+    lr = LinearRegression(n_jobs=-1)
+    dt = DecisionTreeRegressor()
+    nn = MLPRegressor(hidden_layer_sizes=(10, 10), max_iter=5000)  # Deep neural network
 
     # Create ensemble
-    ensemble = VotingRegressor(estimators=[('lr', lr), ('rf', rf), ('gb', gb)])
+    ensemble = VotingRegressor(estimators=[('lr', lr), ('dt', dt), ('nn', nn)])
 
     # Fit ensemble model
     ensemble.fit(X, y)
 
-    # Generate meal plan (placeholder logic)
+    # Generate meal plan using the ensemble model
+    target_macros = [target_protein, target_carbs, target_fat]
+    predicted_meal_calories = ensemble.predict([target_macros])[0]
+
     meal_plan = {
         'Breakfast': {
-            'Calories': target_calories * 0.25,
+            'Calories': predicted_meal_calories * 0.25,
             'Protein': target_protein * 0.25,
             'Carbs': target_carbs * 0.25,
             'Fat': target_fat * 0.25
         },
         'Lunch': {
-            'Calories': target_calories * 0.35,
+            'Calories': predicted_meal_calories * 0.35,
             'Protein': target_protein * 0.35,
             'Carbs': target_carbs * 0.35,
             'Fat': target_fat * 0.35
         },
         'Dinner': {
-            'Calories': target_calories * 0.40,
+            'Calories': predicted_meal_calories * 0.40,
             'Protein': target_protein * 0.40,
             'Carbs': target_carbs * 0.40,
             'Fat': target_fat * 0.40
