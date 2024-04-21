@@ -11,15 +11,16 @@ def print_menu():
     print("4. Get feedback for staying on track")
     print("5. Predict future weight")
     print("6. Get a personalized weight loss plan")
-    print("7. Exit")
+    print("7. Predict daily caloric burn")
+    print("8. Exit")
 
 
 def main():
     while True:
         print_menu()
-        choice = input("Enter your choice (1-7): ")
-        if not choice.isdigit() or int(choice) < 1 or int(choice) > 7:
-            print("\nInvalid choice. Please enter a number from 1 to 6.")
+        choice = input("Enter your choice (1-8): ")
+        if not choice.isdigit() or int(choice) < 1 or int(choice) > 8:
+            print("\nInvalid choice. Please enter a number from 1 to 8.")
             continue
 
         choice = int(choice)
@@ -40,7 +41,10 @@ def main():
             print("\nRecommended Weight Loss Plan:")
             for key, value in plan.items():
                 print(f"{key}: {value}")
-        elif choice == 7:
+        if choice == 7:
+            print("\nPredicting daily caloric burn...")
+            functions.run_caloric_burn_prediction()
+        elif choice == 8:
             print("\nExiting...")
             break
         input("\nPress Enter to continue...")

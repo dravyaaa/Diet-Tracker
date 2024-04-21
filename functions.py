@@ -10,6 +10,11 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, V
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import Adam
+from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
 
@@ -25,17 +30,13 @@ def save_data(data, file_path='user_data.json'):
     with open(file_path, 'w') as file:
         json.dump(data, file, indent=4)
 
+
 def validate_date(date_str):
     try:
         datetime.datetime.strptime(date_str, "%m/%d/%Y")
         return True
     except ValueError:
         return False
-
-
-# Load user data from JSON file
-user_data = load_data('/mnt/data/user_data.json')
-
 
 def enter_diet_info():
     user_data = load_data()
@@ -46,70 +47,63 @@ def enter_diet_info():
         print("Invalid date format. Please enter the date in the format mm/dd/yyyy.")
         date_str = input("Enter date (mm/dd/yyyy): ")
 
+    # Age input with validation
+    age = input("Enter your age: ")
+    while not age.isdigit() or int(age) <= 0 or int(age) > 120:  # Ensuring age is reasonable
+        print("Invalid input. Age must be a positive number less than 120.")
+        age = input("Enter your age: ")
+
     # Activity level input with validation
-    while True:
-        try:
-            activity_level = int(input("Enter your activity level (1-5): "))
-            if 1 <= activity_level <= 5:
-                break
-            else:
-                print("Invalid activity level. Please enter a number between 1 and 5.")
-        except ValueError:
-            print("Invalid input. Please enter a valid number.")
+    activity_level = input("Enter your activity level (1-5): ")
+    while not activity_level.isdigit() or int(activity_level) < 1 or int(activity_level) > 5:
+        print("Invalid activity level. Please enter a number between 1 and 5.")
+        activity_level = input("Enter your activity level (1-5): ")
 
     # Caloric intake input with validation
-    while True:
-        try:
-            calories = float(input("Enter calories consumed: "))
-            break
-        except ValueError:
-            print("Invalid input. Please enter a valid number for calories.")
+    calories = input("Enter calories consumed: ")
+    while not calories.replace('.', '', 1).isdigit() or float(calories) <= 0:
+        print("Invalid input. Please enter a valid number for calories.")
+        calories = input("Enter calories consumed: ")
 
     # Protein input with validation
-    while True:
-        try:
-            protein = float(input("Enter protein (g): "))
-            break
-        except ValueError:
-            print("Invalid input. Please enter a valid number for protein.")
+    protein = input("Enter protein (g): ")
+    while not protein.replace('.', '', 1).isdigit() or float(protein) <= 0:
+        print("Invalid input. Please enter a valid number for protein.")
+        protein = input("Enter protein (g): ")
 
     # Carbohydrates input with validation
-    while True:
-        try:
-            carbs = float(input("Enter carbohydrates (g): "))
-            break
-        except ValueError:
-            print("Invalid input. Please enter a valid number for carbohydrates.")
+    carbs = input("Enter carbohydrates (g): ")
+    while not carbs.replace('.', '', 1).isdigit() or float(carbs) <= 0:
+        print("Invalid input. Please enter a valid number for carbohydrates.")
+        carbs = input("Enter carbohydrates (g): ")
 
     # Fat input with validation
-    while True:
-        try:
-            fat = float(input("Enter fat (g): "))
-            break
-        except ValueError:
-            print("Invalid input. Please enter a valid number for fat.")
+    fat = input("Enter fat (g): ")
+    while not fat.replace('.', '', 1).isdigit() or float(fat) <= 0:
+        print("Invalid input. Please enter a valid number for fat.")
+        fat = input("Enter fat (g): ")
 
     # Weight input with validation
-    while True:
-        try:
-            weight = float(input("Enter current weight (kg): "))
-            break
-        except ValueError:
-            print("Invalid input. Please enter a valid number for weight.")
+    weight = input("Enter current weight (kg): ")
+    while not weight.replace('.', '', 1).isdigit() or float(weight) <= 0:
+        print("Invalid input. Please enter a valid number for weight.")
+        weight = input("Enter current weight (kg): ")
 
     # Append the new entry
     user_data.append({
         "date": date_str,
-        "activity_level": activity_level,
-        "calories": calories,
-        "protein": protein,
-        "carbs": carbs,
-        "fat": fat,
-        "weight": weight
+        "age": int(age),
+        "activity_level": int(activity_level),
+        "calories": float(calories),
+        "protein": float(protein),
+        "carbs": float(carbs),
+        "fat": float(fat),
+        "weight": float(weight)
     })
 
     save_data(user_data)
     print("\nDiet information recorded successfully.")
+
 
 
 def delete_diet_info():
@@ -152,12 +146,15 @@ def display_data():
     print("\nDiet Data:")
     for info in user_data:
         print(f"\nDate: {info['date']}")
+        print(f"Age: {info['age']}")
+        print(f"Activity Level: {info['activity_level']}")
         print(f"Calories: {info['calories']}")
         print(f"Protein: {info['protein']} g")
         print(f"Carbohydrates: {info['carbs']} g")
         print(f"Fat: {info['fat']} g")
         print(f"Weight: {info['weight']} kg")
         print("-" * 20)
+
 
 def get_feedback():
     # Load the user data
@@ -289,3 +286,67 @@ def recommend_weight_loss_plan():
 
     plan = create_weight_loss_plan(current_weight, target_weight, activity_level, preferred_diet, timeframe)
     return plan
+
+
+def load_and_prepare_data():
+    # Load the user data
+    user_data = load_data()
+    if not user_data:
+        print("\nNo data available for training.")
+        return None, None
+
+    # Prepare the dataset for training
+    X = []
+    y = []
+    for entry in user_data:
+        if all(k in entry for k in ['weight', 'age', 'activity_level', 'calories']):
+            X.append([entry['weight'], entry['age'], entry['activity_level']])
+            y.append(entry['calories'])
+
+    if not X:  # Check if X is empty
+        print("\nInsufficient data for training. Make sure each entry has weight, age, activity level, and calories.")
+        return None, None
+
+    return np.array(X), np.array(y)
+
+def train_neural_network():
+    X, y = load_and_prepare_data()
+    if X is None or y is None:
+        return None  # Stop if data loading failed
+
+    # Split the data into training and validation sets
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Define the neural network architecture
+    model = Sequential([
+        Dense(32, activation='relu', input_shape=(3,)),
+        Dropout(0.1),  # Dropout layer to prevent overfitting
+        Dense(16, activation='relu'),
+        Dense(1)
+    ])
+
+    # Compile the model
+    model.compile(optimizer=Adam(), loss='mean_squared_error')
+
+    # Train the model
+    model.fit(X_train, y_train, epochs=50, verbose=1, validation_data=(X_val, y_val))
+
+    return model
+
+def predict_caloric_burn(model):
+    if not model:
+        print("Model training was unsuccessful.")
+        return
+
+    weight = float(input("Enter your weight (kg): "))
+    age = int(input("Enter your age: "))
+    activity_level = int(input("Enter your activity level (1-low, 2-moderate, 3-high): "))
+
+    # Predict the caloric burn
+    predicted_calories = model.predict(np.array([[weight, age, activity_level]]))[0][0]
+    print(f"\nBased on your inputs, your predicted daily caloric burn is: {predicted_calories:.2f} calories.")
+
+def run_caloric_burn_prediction():
+    model = train_neural_network()
+    if model:
+        predict_caloric_burn(model)
