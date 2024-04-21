@@ -112,6 +112,37 @@ def enter_diet_info():
     print("\nDiet information recorded successfully.")
 
 
+def delete_diet_info():
+    user_data = load_data()  # Load the existing data
+
+    if not user_data:
+        print("\nNo data available to delete.")
+        return
+
+    # Display existing entries with dates for user to choose
+    print("\nExisting Entries:")
+    for entry in user_data:
+        print(f"Date: {entry['date']}")
+
+    # Ask user for the date they want to delete
+    date_str = input("\nEnter the date of the entry to delete (mm/dd/yyyy): ")
+
+    # Check if the date exists in the data
+    found = False
+    for i, entry in enumerate(user_data):
+        if entry['date'] == date_str:
+            found = True
+            break
+
+    if found:
+        # Remove the entry
+        del user_data[i]
+        save_data(user_data)  # Save the updated data back to the file
+        print(f"Entry for {date_str} deleted successfully.")
+    else:
+        print("No entry found for the specified date.")
+
+
 def display_data():
     user_data = load_data()
     if not user_data:
