@@ -229,9 +229,7 @@ def predict_weight():
 
 
 def create_weight_loss_plan(current_weight, target_weight, activity_level, preferred_diet, timeframe):
-    # Simulate loading or creation of training data
-    # Example feature set: [current weight, target weight, activity level, diet type encoded, timeframe]
-    # Example target: daily calorie intake (just a placeholder)
+
     np.random.seed(42)
     X_train = np.random.rand(100, 5) * 100  # 100 samples, 5 features
     y_train = np.random.rand(100) * 2000 + 1200  # 100 samples, target between 1200 and 3200 calories
