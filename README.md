@@ -10,7 +10,7 @@ One of the key novel aspects of the Diet Tracker is its integration of machine l
 
 Furthermore, the application's ability to generate customized weight loss and meal plans based on individual preferences and goals is a standout feature. By considering factors such as current weight, target weight, activity level, preferred diet type, and desired timeframe, the Diet Tracker tailors a comprehensive plan that maximizes the chances of successful weight management. This level of personalization sets the application apart from generic, one-size-fits-all approaches, ensuring that users receive a plan that aligns with their specific needs and preferences.
 
-
+## Installation And Instruction To Use
 ### Installation
 **For Windows and macOS:**
 1. Ensure Python 3.8 or higher is installed on your system. You can download it from [python.org](https://www.python.org/downloads/).
