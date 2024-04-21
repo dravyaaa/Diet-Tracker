@@ -1,5 +1,3 @@
-from sklearn.model_selection import cross_val_score, KFold
-from sklearn.metrics import mean_squared_error, make_scorer
 import numpy as np
 import json
 import os
@@ -9,7 +7,6 @@ from joblib import dump
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, VotingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
-from sklearn.neighbors import KNeighborsRegressor
 import matplotlib.pyplot as plt
 
 
