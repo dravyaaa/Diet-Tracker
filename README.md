@@ -77,10 +77,60 @@ This command initiates the application in the command line interface.
 - Holds the RandomForestRegressor model trained on historical dietary data.
 - Utilized by `predict_weight()` to generate weight predictions based on new dietary inputs.
 
+### Flow chart
+                             +-------------------+
+                             |    main.py        |
+                             |                   |
+                             | + Calls functions |
+                             +---------+---------+
+                                       |
+                                       v
+                             +---------+---------+
+                             |   functions.py    |
+                             |                   |
+                             | + Manages data    |
+                             | + Performs        |
+                             |   calculations    |
+                             | + Predicts        |
+                             |   outcomes        |
+                             +---------+---------+
+                                       |
+                                       v
+                             +---------+---------+
+                             | user_data.json    |
+                             |                   |
+                             | + Stores user     |
+                             |   diet entries    |
+                             | + Read/Write      |
+                             |   operations      |
+                             +-------------------+
+
+
 
 ## Functionalities and Test Results
+- ### Diet Tracking Menu
+![Screenshot 2024-04-23 094634](https://github.com/dravyaaa/Diet-Tracker/assets/107662465/e714b144-25aa-4bd5-8c5c-65b453f778cf)
 
+- ### Diet Information for a day
+![Screenshot 2024-04-23 094719](https://github.com/dravyaaa/Diet-Tracker/assets/107662465/4786d646-bd98-4a0f-9b02-6ff37c3cacc4)
 
+- ### Data
+![Screenshot 2024-04-23 094806](https://github.com/dravyaaa/Diet-Tracker/assets/107662465/bbd1ede9-ea6a-4d5f-94df-88a929faeab3)
+
+- ### Feedback
+![Screenshot 2024-04-23 094826](https://github.com/dravyaaa/Diet-Tracker/assets/107662465/573f4d21-eeb7-45b2-90c7-2f79be2c3a55)
+
+- ### Deletion
+![Screenshot 2024-04-23 094842](https://github.com/dravyaaa/Diet-Tracker/assets/107662465/26423632-f961-4618-bbbb-3dc71c3ff354)
+
+- ### Weight Prediction
+![Screenshot 2024-04-23 094901](https://github.com/dravyaaa/Diet-Tracker/assets/107662465/93fbfbb0-c011-4496-84f6-08bf71eba0e5)
+
+- ### Weight Loss plan
+![Screenshot 2024-04-23 094959](https://github.com/dravyaaa/Diet-Tracker/assets/107662465/f82a19d2-df73-4dc8-941a-4347813ce03e)
+
+- ### Meal Plan
+![Screenshot 2024-04-23 095029](https://github.com/dravyaaa/Diet-Tracker/assets/107662465/db625a77-bd61-4a5b-b778-7e315154e9ab)
 
 
 ## Discussion and Conclusion
