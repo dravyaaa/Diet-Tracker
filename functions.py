@@ -251,10 +251,10 @@ def create_weight_loss_plan(current_weight, target_weight, activity_level, prefe
     # Generate feature vector for prediction
     feature_vector = [current_weight, target_weight, activity_level, diet_code, timeframe]
 
-    # Predict daily calorie intake and macronutrient distribution (placeholder values)
+    # Predict daily calorie intake and macronutrient distribution
     daily_calories = ensemble.predict([feature_vector])[0]
 
-    # Create plan (placeholder details for macronutrients)
+    # Create plan
     weight_loss_plan = {
         'Daily Calories': daily_calories,
         'Protein (g)': daily_calories * 0.15 / 4,  # Example calculation
