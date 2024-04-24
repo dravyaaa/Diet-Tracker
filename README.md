@@ -18,7 +18,7 @@ Furthermore, the application's ability to generate customized weight loss and me
   
 3. Clone the repository:
   ```bash
-  git clone https://github.com/your-username/Diet-Tracker.git
+  git clone https://github.com/dravyaaa/Diet-Tracker.git
   cd Diet-Tracker
 ```
 ### Usage Instructions
