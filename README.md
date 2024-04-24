@@ -127,10 +127,12 @@ This command initiates the application in the command line interface.
 ![Screenshot 2024-04-23 094901](https://github.com/dravyaaa/Diet-Tracker/assets/107662465/93fbfbb0-c011-4496-84f6-08bf71eba0e5)
 
 - ### Weight Loss plan
-![Screenshot 2024-04-23 094959](https://github.com/dravyaaa/Diet-Tracker/assets/107662465/f82a19d2-df73-4dc8-941a-4347813ce03e)
+![image](https://github.com/dravyaaa/Diet-Tracker/assets/43622669/75fd6693-cb67-4b0f-aaf7-21c758d8918a)
+
 
 - ### Meal Plan
-![Screenshot 2024-04-23 095029](https://github.com/dravyaaa/Diet-Tracker/assets/107662465/db625a77-bd61-4a5b-b778-7e315154e9ab)
+![image](https://github.com/dravyaaa/Diet-Tracker/assets/43622669/19716186-d6f2-4913-afc0-cf8f254999bf)
+
 
 
 ## Discussion and Conclusion
